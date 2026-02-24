@@ -1,0 +1,298 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: zabbix-mysql
+    command:
+      - mysqld
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_bin
+      - --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: zabbix
+      MYSQL_USER: zabbix
+      MYSQL_PASSWORD: zabbix
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db/zabbix/backup-zabbix.sql.gz:/docker-entrypoint-initdb.d/01-zabbix.sql.gz:ro
+    ports:
+      - "3306:3306"
+    networks:
+      - zabbix-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  zabbix-server:
+    image: zabbix/zabbix-server-mysql:latest
+    container_name: zabbix-server
+    environment:
+      DB_SERVER_HOST: mysql
+      MYSQL_DATABASE: zabbix
+      MYSQL_USER: zabbix
+      MYSQL_PASSWORD: zabbix
+      MYSQL_ROOT_PASSWORD: root
+      ZBX_CACHESIZE: 256M
+    volumes:
+      - zabbix_server_data:/var/lib/zabbix
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "10051:10051"
+    networks:
+      - zabbix-net
+    healthcheck:
+      test: ["CMD", "zabbix_server", "-R", "config_cache_reload"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  zabbix-web:
+    image: zabbix/zabbix-web-nginx-mysql:latest
+    container_name: zabbix-web
+    environment:
+      DB_SERVER_HOST: mysql
+      MYSQL_DATABASE: zabbix
+      MYSQL_USER: zabbix
+      MYSQL_PASSWORD: zabbix
+      MYSQL_ROOT_PASSWORD: root
+      ZBX_SERVER_HOST: zabbix-server
+      ZBX_SERVER_PORT: 10051
+      PHP_TZ: Europe/Warsaw
+    depends_on:
+      mysql:
+        condition: service_healthy
+      zabbix-server:
+        condition: service_started
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - zabbix-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  zabbix-agent1:
+    image: zabbix/zabbix-agent:latest
+    container_name: zabbix-agent1
+    environment:
+      ZBX_HOSTNAME: zabbix-agent1
+      ZBX_SERVER_HOST: zabbix-server
+      ZBX_SERVER_PORT: 10051
+    depends_on:
+      zabbix-server:
+        condition: service_started
+    volumes:
+      - ./suricata/log:/var/log/suricata:ro
+      - wazuh_logs:/var/ossec/logs:ro
+    restart: unless-stopped
+    networks:
+      - zabbix-net
+
+  zabbix-agent2:
+    image: zabbix/zabbix-agent2:latest
+    container_name: zabbix-agent2
+    privileged: true
+    user: root
+    environment:
+      ZBX_HOSTNAME: zabbix-agent2
+      ZBX_SERVER_HOST: zabbix-server
+      ZBX_SERVER_PORT: 10051
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      zabbix-server:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - zabbix-net
+
+  wp-db:
+    image: mariadb:10.6
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: MbMvQpZJJBEuU2#wyZ
+      MYSQL_DATABASE: wordpress_db
+      MYSQL_USER: WiktorN
+      MYSQL_PASSWORD: MbMvQpZJJBEuU2#wyZ
+    volumes:
+      - wp_db_data:/var/lib/mysql
+      - ./init-db/wordpress/backup-wordpress.sql:/docker-entrypoint-initdb.d/01-wordpress.sql:ro
+    networks:
+      - zabbix-net
+
+  wordpress:
+    image: wordpress:latest
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      WORDPRESS_DB_HOST: wp-db
+      WORDPRESS_DB_USER: WiktorN
+      WORDPRESS_DB_PASSWORD: MbMvQpZJJBEuU2#wyZ
+      WORDPRESS_DB_NAME: wordpress_db
+    volumes:
+      - ./backup-wordpress:/var/www/html
+    networks:
+      - zabbix-net
+    depends_on:
+      - wp-db
+
+  joomla-db:
+    image: mariadb:10.6
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: MbMvQpZJJBEuU2#wyZ
+      MYSQL_DATABASE: joomla_db
+      MYSQL_USER: joomla_user
+      MYSQL_PASSWORD: joomla_password
+    volumes:
+      - joomla_db_data:/var/lib/mysql:Z
+      - ./init-db/joomla/backup-joomla.sql:/docker-entrypoint-initdb.d/01-joomla.sql:ro
+    networks:
+      - zabbix-net
+
+  joomla:
+    image: joomla:latest
+    restart: always
+    ports:
+      - "8082:80"
+    environment:
+      JOOMLA_DB_HOST: joomla-db
+      JOOMLA_DB_USER: joomla_user
+      JOOMLA_DB_PASSWORD: MbMvQpZJJBEuU2#wyZ
+      JOOMLA_DB_NAME: joomla_db
+    volumes:
+      - ./backup-joomla:/var/www/html:Z
+    networks:
+      - zabbix-net
+    depends_on:
+      - joomla-db
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    networks:
+      - zabbix-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_INSTALL_PLUGINS=alexanderzobnin-zabbix-app
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./backup-grafana.db:/var/lib/grafana/grafana.db:rw
+    networks:
+      - zabbix-net
+    restart: unless-stopped
+    
+  suricata:
+    image: jasonish/suricata:8.0.3
+    container_name: suricata
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_NICE
+    volumes:
+      - ./suricata/config:/etc/suricata
+      - ./suricata/log:/var/log/suricata
+      - ./suricata/rules:/var/lib/suricata/rules
+    command: -c /etc/suricata/suricata.yaml -i eth0
+    restart: unless-stopped
+    
+  wazuh-indexer:
+    image: wazuh/wazuh-indexer:4.7.2
+    container_name: wazuh-indexer
+    ports:
+      - "9200:9200"
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - wazuh_indexer_data:/var/lib/wazuh-indexer
+    networks:
+      - zabbix-net
+
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.7.2
+    container_name: wazuh-manager
+    depends_on:
+      - wazuh-indexer
+    volumes:
+      - wazuh_etc:/var/ossec/etc
+      - wazuh_logs:/var/ossec/logs
+    networks:
+      - zabbix-net
+    ports:
+      - "1514:1514"
+      - "1515:1515"
+      - "55000:55000"
+
+  wazuh-dashboard:
+    image: wazuh/wazuh-dashboard:4.7.2
+    container_name: wazuh-dashboard
+    depends_on:
+      - wazuh-manager
+    ports:
+      - "8443:5601"
+    environment:
+      - WAZUH_MANAGER_URL=https://wazuh-manager
+    networks:
+      - zabbix-net
+      
+  kali-rolling:
+    image: kalilinux/kali-rolling:latest
+    container_name: kali-attacker
+    tty: true
+    stdin_open: true
+    networks:
+      - zabbix-net
+    volumes:
+      - ./kali_data:/root
+    command: >
+      sh -c "apt-get update && apt-get install -y zabbix-agent && 
+             echo 'Server=0.0.0.0/0' > /etc/zabbix/zabbix_agentd.conf && 
+             echo 'Hostname=kali-attacker' >> /etc/zabbix/zabbix_agentd.conf && 
+             echo 'LogType=console' >> /etc/zabbix/zabbix_agentd.conf && 
+             zabbix_agentd -f"
+
+volumes:
+  mysql_data:
+  zabbix_server_data:
+  wp_db_data:
+  wp_files:
+  joomla_db_data:
+  joomla_files:
+  prometheus_data:
+  grafana_data:
+  wazuh_indexer_data:
+  wazuh_etc:
+  wazuh_logs:
+
+networks:
+  zabbix-net:
+    driver: bridge

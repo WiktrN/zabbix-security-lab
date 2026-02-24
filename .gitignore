@@ -1,0 +1,9 @@
+.env
+mysql_data/
+wp_db_data/
+joomla_db_data/
+prometheus_data/
+grafana_data/
+wazuh_indexer_data/
+suricata/log/*
+*.log
