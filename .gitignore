@@ -1,4 +1,5 @@
 .env
+.DS_Store
 mysql_data/
 wp_db_data/
 joomla_db_data/
