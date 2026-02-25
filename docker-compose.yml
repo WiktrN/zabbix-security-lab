@@ -158,7 +158,7 @@ services:
       MYSQL_USER: joomla_user
       MYSQL_PASSWORD: joomla_password
     volumes:
-      - joomla_db_data:/var/lib/mysql:Z
+      - joomla_db_data:/var/lib/mysql
       - ./init-db/joomla/backup-joomla.sql:/docker-entrypoint-initdb.d/01-joomla.sql:ro
     networks:
       - zabbix-net
@@ -174,7 +174,7 @@ services:
       JOOMLA_DB_PASSWORD: MbMvQpZJJBEuU2#wyZ
       JOOMLA_DB_NAME: joomla_db
     volumes:
-      - ./backup-joomla:/var/www/html:Z
+      - ./backup-joomla:/var/www/html
     networks:
       - zabbix-net
     depends_on:
@@ -226,6 +226,7 @@ services:
     restart: unless-stopped
     
   wazuh-indexer:
+    platform: linux/amd64
     image: wazuh/wazuh-indexer:4.7.2
     container_name: wazuh-indexer
     ports:
@@ -238,6 +239,7 @@ services:
       - zabbix-net
 
   wazuh-manager:
+    platform: linux/amd64
     image: wazuh/wazuh-manager:4.7.2
     container_name: wazuh-manager
     depends_on:
@@ -253,6 +255,7 @@ services:
       - "55000:55000"
 
   wazuh-dashboard:
+    platform: linux/amd64
     image: wazuh/wazuh-dashboard:4.7.2
     container_name: wazuh-dashboard
     depends_on:
@@ -264,8 +267,10 @@ services:
     networks:
       - zabbix-net
       
-  kali-rolling:
-    image: kalilinux/kali-rolling:latest
+  kali-attacker:
+    build:
+      context: ./kali
+      dockerfile: Dockerfile
     container_name: kali-attacker
     tty: true
     stdin_open: true
@@ -273,12 +278,7 @@ services:
       - zabbix-net
     volumes:
       - ./kali_data:/root
-    command: >
-      sh -c "apt-get update && apt-get install -y zabbix-agent && 
-             echo 'Server=0.0.0.0/0' > /etc/zabbix/zabbix_agentd.conf && 
-             echo 'Hostname=kali-attacker' >> /etc/zabbix/zabbix_agentd.conf && 
-             echo 'LogType=console' >> /etc/zabbix/zabbix_agentd.conf && 
-             zabbix_agentd -f"
+    restart: unless-stopped
 
 volumes:
   mysql_data:
