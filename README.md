@@ -1,3 +1,5 @@
+---
+
 ## 🛡️ Full-Stack Monitoring & Security Lab
 
 ### Kompletne poligon doświadczalny: Monitoring, SIEM, IDS & Penetration Testing
@@ -17,12 +19,12 @@ To środowisko łączy światy **DevOps** i **Cybersecurity**, oferując w pełn
 
 ## 🚀 Szybki Start
 
-### 1. Sklonuj projekt
 ```bash
+# Sklonuj projekt
 git clone https://github.com/WiktrN/zabbix-security-lab.git
 cd zabbix-security-lab
 
-Uruchom laboratorium
+# Uruchom laboratorium
 docker compose up -d --build
 ```
 
@@ -30,7 +32,7 @@ docker compose up -d --build
 
 ---
 
-# 🛠️ Panel Sterowania (Dashboardy)
+## 🛠️ Panel Sterowania (Dashboardy)
 | Usługa | URL | Użytkownik | Hasło |
 | :--- | :--- | :--- | :--- |
 | **🔍 Zabbix** | [http://localhost:8080](http://localhost:8080) | `Admin` | `zabbix` |
@@ -42,7 +44,7 @@ docker compose up -d --build
 
 ---
 
-# ⚔️ Kali Linux - Centrum Ataku
+## ⚔️ Kali Linux - Centrum Ataku
 Kontener Kali jest gotowy do pracy zaraz po starcie.
 
 ```Bash
@@ -52,7 +54,7 @@ docker exec -it kali-attacker bash
 
 ---
 
-# 📂 Struktura Projektu
+## 📂 Struktura Projektu
 ```Plaintext
 .
 ├── config/             # Konfiguracje (Prometheus, Suricata)
@@ -64,7 +66,7 @@ docker exec -it kali-attacker bash
 
 ---
 
-# 🕵️ Przykładowe Scenariusze Testowe
+## 🕵️ Przykładowe Scenariusze Testowe
 1. **Reakcja IDS:** Wykonaj nmap -sV [IP-celu] z Kali i sprawdź logi Suricaty w config/suricata/log/eve.json.
 
 2. **Monitoring SIEM:** Zaloguj się do Wazuh i zaobserwuj zdarzenia systemowe z agentów.
@@ -73,8 +75,8 @@ docker exec -it kali-attacker bash
 
 ---
 
-# ⚠️ Rozwiązywanie problemów
-* **Zasoby:** Upewnij się, że Docker ma przydzielone minimum 6GB RAM (Wazuh Indexer jest dość wymagający).
+## ⚠️ Rozwiązywanie problemów
+* **Zasoby:** Upewnij się, że Docker ma przydzielone minimum **6GB RAM** (Wazuh Indexer jest dość wymagający).
 
 * **Uprawnienia:** Jeśli bazy danych nie wstają, sprawdź uprawnienia do folderu data/.
 
