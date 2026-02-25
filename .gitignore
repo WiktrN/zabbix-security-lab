@@ -1,10 +1,17 @@
-.env
+# Systemowe
 .DS_Store
-mysql_data/
-wp_db_data/
-joomla_db_data/
-prometheus_data/
-grafana_data/
-wazuh_indexer_data/
-suricata/log/*
-*.log
+**/.DS_Store
+
+# Logi Suricaty
+config/suricata/log/*
+!config/suricata/log/.gitkeep
+
+# Bazy danych i dane aplikacji
+data/backup-grafana.db
+data/init-db/**/*.sql
+data/init-db/**/*.sql.gz
+
+# Dane Kali
+kali/data/.ssh/
+kali/data/.bash_history
+kali/data/.wpscan/

@@ -14,7 +14,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./init-db/zabbix/backup-zabbix.sql.gz:/docker-entrypoint-initdb.d/01-zabbix.sql.gz:ro
+      - ./data/init-db/zabbix/backup-zabbix.sql.gz:/docker-entrypoint-initdb.d/01-zabbix.sql.gz:ro
     ports:
       - "3306:3306"
     networks:
@@ -94,7 +94,7 @@ services:
       zabbix-server:
         condition: service_started
     volumes:
-      - ./suricata/log:/var/log/suricata:ro
+      - ./config/suricata/log:/var/log/suricata:ro
       - wazuh_logs:/var/ossec/logs:ro
     restart: unless-stopped
     networks:
@@ -122,15 +122,20 @@ services:
     image: mariadb:10.6
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: MbMvQpZJJBEuU2#wyZ
+      MYSQL_ROOT_PASSWORD: MbMvQpZJJBEuU2
       MYSQL_DATABASE: wordpress_db
       MYSQL_USER: WiktorN
-      MYSQL_PASSWORD: MbMvQpZJJBEuU2#wyZ
+      MYSQL_PASSWORD: MbMvQpZJJBEuU2
     volumes:
       - wp_db_data:/var/lib/mysql
-      - ./init-db/wordpress/backup-wordpress.sql:/docker-entrypoint-initdb.d/01-wordpress.sql:ro
+      - ./data/init-db/wordpress/backup-wordpress.sql:/docker-entrypoint-initdb.d/01-wordpress.sql:ro
     networks:
       - zabbix-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pMbMvQpZJJBEuU2"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   wordpress:
     image: wordpress:latest
@@ -140,28 +145,34 @@ services:
     environment:
       WORDPRESS_DB_HOST: wp-db
       WORDPRESS_DB_USER: WiktorN
-      WORDPRESS_DB_PASSWORD: MbMvQpZJJBEuU2#wyZ
+      WORDPRESS_DB_PASSWORD: MbMvQpZJJBEuU2
       WORDPRESS_DB_NAME: wordpress_db
     volumes:
-      - ./backup-wordpress:/var/www/html
+      - wp_files:/var/www/html
     networks:
       - zabbix-net
     depends_on:
-      - wp-db
+      wp-db:
+        condition: service_healthy
 
   joomla-db:
     image: mariadb:10.6
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: MbMvQpZJJBEuU2#wyZ
+      MYSQL_ROOT_PASSWORD: MbMvQpZJJBEuU2
       MYSQL_DATABASE: joomla_db
       MYSQL_USER: joomla_user
       MYSQL_PASSWORD: joomla_password
     volumes:
       - joomla_db_data:/var/lib/mysql
-      - ./init-db/joomla/backup-joomla.sql:/docker-entrypoint-initdb.d/01-joomla.sql:ro
+      - ./data/init-db/joomla/backup-joomla.sql:/docker-entrypoint-initdb.d/01-joomla.sql:ro
     networks:
       - zabbix-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pMbMvQpZJJBEuU2"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   joomla:
     image: joomla:latest
@@ -171,20 +182,26 @@ services:
     environment:
       JOOMLA_DB_HOST: joomla-db
       JOOMLA_DB_USER: joomla_user
-      JOOMLA_DB_PASSWORD: MbMvQpZJJBEuU2#wyZ
+      JOOMLA_DB_PASSWORD: joomla_password
       JOOMLA_DB_NAME: joomla_db
+      JOOMLA_SITE_NAME: "joomla-site"
+      JOOMLA_ADMIN_USER: WiktorN
+      JOOMLA_ADMIN_PASSWORD: MbMvQpZJJBEuU2
+      JOOMLA_ADMIN_EMAIL: wiktornth@gmail.com
     volumes:
-      - ./backup-joomla:/var/www/html
+      - joomla_files:/var/www/html
+      - ./data/init-db/joomla/configuration.php:/var/www/html/configuration.php:ro
     networks:
       - zabbix-net
     depends_on:
-      - joomla-db
+      joomla-db:
+        condition: service_healthy
 
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -205,7 +222,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./backup-grafana.db:/var/lib/grafana/grafana.db:rw
+      - ./data/backup-grafana.db:/var/lib/grafana/grafana.db:rw
     networks:
       - zabbix-net
     restart: unless-stopped
@@ -219,9 +236,9 @@ services:
       - NET_RAW
       - SYS_NICE
     volumes:
-      - ./suricata/config:/etc/suricata
-      - ./suricata/log:/var/log/suricata
-      - ./suricata/rules:/var/lib/suricata/rules
+      - ./config/suricata/config:/etc/suricata
+      - ./config/suricata/log:/var/log/suricata
+      - ./config/suricata/rules:/var/lib/suricata/rules
     command: -c /etc/suricata/suricata.yaml -i eth0
     restart: unless-stopped
     
@@ -277,7 +294,7 @@ services:
     networks:
       - zabbix-net
     volumes:
-      - ./kali_data:/root
+      - ./kali/data:/root
     restart: unless-stopped
 
 volumes:
