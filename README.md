@@ -1,61 +1,60 @@
-# Full-Stack Monitoring & Security Lab
+🛡️ Full-Stack Monitoring & Security Lab
+Kompletne poligon doświadczalny: Monitoring, SIEM, IDS & Penetration Testing
 
-Kompletne środowisko do nauki cyberbezpieczeństwa z monitoringiem (Zabbix, Prometheus, Grafana), SIEM (Wazuh), IDS (Suricata) oraz celami ataków (WordPress, Joomla) + Kali Linux.
+To środowisko łączy światy DevOps i Cybersecurity, oferując w pełni skonfigurowany stos monitorujący oraz zaawansowane narzędzia bezpieczeństwa skierowane przeciwko podatnym aplikacjom webowym.
 
-## Wymagania
+🏗️ Architektura Systemu
+Monitoring: Zabbix (Server, Web, Agents), Prometheus, Grafana
 
-- Docker + Docker Compose
-- 4GB RAM minimum
-- Wolne porty: 3306, 8080-8082, 3000, 9090, 8443, 10051, 1514-1515, 55000
+Security (SIEM/IDS): Wazuh (Indexer, Manager, Dashboard), Suricata
 
-## Szybki start
+Targets (Vulnerable Apps): WordPress & Joomla na bazach MariaDB
 
-```bash
+Offensive: Kali Linux (Attacker) ze zintegrowanym Zabbix Agentem
+
+🚀 Szybki Start
+Bash
+# Sklonuj projekt
 git clone https://github.com/WiktrN/zabbix-security-lab.git
 cd zabbix-security-lab
-docker-compose up -d
 
-Pierwsze uruchomienie trwa 2-3 minuty (inicjalizacja baz danych).
+# Uruchom laboratorium
+docker compose up -d --build
+Uwaga: Pierwsze uruchomienie trwa ok. 2-3 minuty (inicjalizacja baz danych i import backupów).
 
-Dostępne usługi
+🛠️ Panel Sterowania (Dashboardy)
+Usługa    URL    Użytkownik    Hasło
+🔍 Zabbix    localhost:8080    Admin    zabbix
+📊 Grafana    localhost:3000    admin    admin
+🛡️ Wazuh    localhost:8443    admin    admin
+📈 Prometheus    localhost:9090    -    -
+📝 WordPress    localhost:8081    WiktorN    MbMvQpZJJBEuU2#wyZ
+🧪 Joomla    localhost:8082    WiktorN    MbMvQpZJJBEuU2#wyZ
+⚔️ Kali Linux - Centrum Ataku
+Kontener Kali jest gotowy do pracy zaraz po starcie.
 
-Wszystkie usługi są w pełni skonfigurowane – wystarczy wejść na adres i zalogować się.
-
-| Usługa         | URL                      | Login        | Hasło              |
-| -------------- | ------------------------ | ------------ | ------------------ |
-| Zabbix         | <http://localhost:8080>  | Admin        | zabbix             |
-| WordPress      | <http://localhost:8081>  | WiktorN      | MbMvQpZJJBEuU2#wyZ |
-| Joomla (admin) | <http://localhost:8082>  | WiktorN      | MbMvQpZJJBEuU2#wyZ |
-| Joomla (user)  | <http://localhost:8082>  | joomla\_user | joomla\_password   |
-| Grafana        | <http://localhost:3000>  | admin        | admin              |
-| Prometheus     | <http://localhost:9090>  | -            | -                  |
-| Wazuh          | <https://localhost:8443> | admin        | admin              |
-
-Kali Linux (attacker)
-
+Bash
 docker exec -it kali-attacker bash
+Wbudowane narzędzia: nmap, hydra, hping3, sqlmap, curl, zabbix-agent.
 
-Dostępne narzędzia: nmap, hydra, hping3, sqlmap, curl, zabbix-agent
+📂 Struktura Projektu
+Plaintext
+.
+├── config/             # Konfiguracje (Prometheus, Suricata)
+├── data/               # Dane trwałe (Bazy danych, backupy Grafany)
+│   └── init-db/        # Skrypty inicjalizujące SQL (WP, Joomla, Zabbix)
+├── kali/               # Dockerfile i dane domowe atakującego
+└── docker-compose.yml  # Definicja całego stosu
+🕵️ Przykładowe Scenariusze Testowe
+Reakcja IDS: Wykonaj nmap -sV [IP-celu] z Kali i sprawdź logi Suricaty w config/suricata/log/eve.json.
 
-Zarządzanie
+Monitoring SIEM: Zaloguj się do Wazuh i zaobserwuj zdarzenia systemowe z agentów.
 
-# Zatrzymaj wszystko
-docker-compose down
+Alerting Zabbix: Wyłącz jeden z kontenerów i zobacz, jak szybko Zabbix wyśle powiadomienie o braku dostępności usługi.
 
-# Zatrzymaj i usuń wszystkie dane (czysty reset)
-docker-compose down -v
+⚠️ Rozwiązywanie problemów
+Zasoby: Upewnij się, że Docker ma przydzielone minimum 6GB RAM (Wazuh Indexer jest dość wymagający).
 
-# Sprawdź logi
-docker-compose logs -f [nazwa_usługi]
+Uprawnienia: Jeśli bazy danych nie wstają, sprawdź uprawnienia do folderu data/.
 
-Architektura
-
-- Monitoring: Zabbix (serwer + web + agenci), Prometheus, Grafana
-- Bezpieczeństwo: Wazuh (SIEM), Suricata (IDS)
-- Cele: WordPress, Joomla (MariaDB)
-- Attacker: Kali Linux
-
-Uwagi
-
-Hasła są ustawione na sztywno w plikach konfiguracyjnych – zmień je w środowisku produkcyjnym
-Suricata wymaga interfejsu eth0 – jeśli masz inny, zmień w docker-compose.yml
+Sieć: Suricata domyślnie nasłuchuje na eth0. Jeśli Twój główny interfejs w Dockerze nazywa się inaczej, skoryguj to w docker-compose.yml w sekcji command dla Suricaty.
