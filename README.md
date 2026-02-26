@@ -88,9 +88,9 @@ docker exec -it kali-attacker curl http://wordpress.
 
 * **Dynamiczne Alerty:** Host zabbix-agent2 zgłosi następujące zdarzenia (zgodnie z nową konfiguracją angielską):
 
- - **Czerwony Alert (High):** Critical: zabbix-joomla-1 service is unhealthy (Healthcheck failure) – jeśli skrypt sprawdzający stan zdrowia bazy zgłosi błąd.
+    * **Czerwony Alert (High):** Critical: zabbix-joomla-1 service is unhealthy (Healthcheck failure) – jeśli skrypt sprawdzający stan zdrowia bazy zgłosi błąd.
 
- - **Pomarańczowy Alert (Average):** Warning: zabbix-joomla-1 application container has been stopped – gdy proces kontenera zostanie zakończony.
+    * **Pomarańczowy Alert (Average):** Warning: zabbix-joomla-1 application container has been stopped – gdy proces kontenera zostanie zakończony.
 
 * **Web Monitoring:** W sekcji Monitoring -> Hosts -> Web możesz sprawdzić w czasie rzeczywistym status HTTP i czas odpowiedzi dla WordPressa oraz Joomli.
 
