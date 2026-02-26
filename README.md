@@ -73,6 +73,38 @@ docker exec -it kali-attacker bash
 
 3. **Alerting Zabbix:** Wyłącz jeden z kontenerów i zobacz, jak szybko Zabbix wyśle powiadomienie o braku dostępności usługi.
 
+
+## 🕵️ Weryfikacja Systemu i Scenariusze Testowe
+
+Ten projekt został wstępnie skonfigurowany do dynamicznej analizy zdarzeń bezpieczeństwa. Użyj poniższych scenariuszy, aby sprawdzić działanie stosu SOC:
+
+**1. Detekcja Ataków (Suricata IDS + Zabbix)**
+
+* Działanie: Uruchom symulowany atak z kontenera Kali: docker exec -it kali-attacker curl http://wordpress.
+
+* Alert Zabbix: Na dashboardzie pojawi się powiadomienie Suricata Alert: GPC Potential SSH Brute Force.
+
+* Automatyzacja: Dzięki konfiguracji Recovery expression (nodata), alert zostanie automatycznie zamknięty 30 sekund po ustaniu ruchu, utrzymując porządek w konsoli SOC.
+
+**2. Monitorowanie Infrastruktury (Docker Health)**
+
+* Symulacja: Zatrzymaj kontener ręcznie, aby wywołać alert: docker stop zabbix-joomla-1.
+
+* Dynamiczne Alerty: Host zabbix-agent2 zgłosi następujące zdarzenia (zgodnie z nową konfiguracją angielską):
+
+ * Czerwony Alert (High): Critical: zabbix-joomla-1 service is unhealthy (Healthcheck failure) – jeśli skrypt sprawdzający stan zdrowia bazy zgłosi błąd.
+
+ * Pomarańczowy Alert (Average): Warning: zabbix-joomla-1 application container has been stopped – gdy proces kontenera zostanie zakończony.
+
+* Web Monitoring: W sekcji Monitoring -> Hosts -> Web możesz sprawdzić w czasie rzeczywistym status HTTP i czas odpowiedzi dla WordPressa oraz Joomli.
+
+**3. Operacje SIEM (Wazuh Manager)**
+
+* Sprawdzenie Statusu: Zweryfikuj działanie silnika SIEM, wyświetlając listę aktywnych agentów:
+docker exec -it wazuh-manager /var/ossec/bin/agent_control -l
+
+*Uwaga: Przez pierwsze 2-3 minuty od uruchomienia mogą pojawiać się błędy Connection refused dla queue/db/wdb. Jest to normalne zjawisko – usługi Wazuha potrzebują czasu na zainicjowanie wewnętrznych gniazd bazy danych.
+
 ---
 
 ## ⚠️ Rozwiązywanie problemów
