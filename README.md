@@ -11,7 +11,7 @@ To środowisko łączy światy **DevOps** i **Cybersecurity**, oferując w pełn
 ## 🏗️ Architektura Systemu
 
 * **Monitoring:** Zabbix (Server, Web, Agents), Prometheus, Grafana
-* **Security (SIEM/IDS):** Suricata
+* **Security (IDS):** Suricata
 * **Targets (Vulnerable Apps):** WordPress & Joomla na bazach MariaDB
 * **Offensive:** Kali Linux (Attacker) ze zintegrowanym Zabbix Agentem
 
