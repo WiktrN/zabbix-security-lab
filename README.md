@@ -2,16 +2,16 @@
 
 ## 🛡️ Full-Stack Monitoring & Security Lab
 
-### Kompletne poligon doświadczalny: Monitoring, SIEM, IDS & Penetration Testing
+### Kompletne poligon doświadczalny: Monitoring, IDS & Penetration Testing
 
-To środowisko łączy światy **DevOps** i **Cybersecurity**, oferując w pełni skonfigurowany stos monitorujący oraz zaawansowane narzędzia bezpieczeństwa skierowane przeciwko podatnym aplikacjom webowym.
+To środowisko łączy światy **DevOps** i **Cybersecurity**, oferując w pełni skonfigurowany stos monitorujący oraz narzędzia bezpieczeństwa skierowane przeciwko podatnym aplikacjom webowym.
 
 ---
 
 ## 🏗️ Architektura Systemu
 
 * **Monitoring:** Zabbix (Server, Web, Agents), Prometheus, Grafana
-* **Security (SIEM/IDS):** Wazuh (Indexer, Manager, Dashboard), Suricata
+* **Security (SIEM/IDS):** Suricata
 * **Targets (Vulnerable Apps):** WordPress & Joomla na bazach MariaDB
 * **Offensive:** Kali Linux (Attacker) ze zintegrowanym Zabbix Agentem
 
@@ -37,7 +37,6 @@ docker compose up -d --build
 | :--- | :--- | :--- | :--- |
 | **🔍 Zabbix** | [http://localhost:8080](http://localhost:8080) | `Admin` | `zabbix` |
 | **📊 Grafana** | [http://localhost:3000](http://localhost:3000) | `admin` | `admin` |
-| **🛡️ Wazuh** | [https://localhost:8443](https://localhost:8443) | `admin` | `admin` |
 | **📈 Prometheus** | [http://localhost:9090](http://localhost:9090) | `-` | `-` |
 | **📝 WordPress** | [http://localhost:8081](http://localhost:8081) | `WiktorN` | `MbMvQpZJJBEuU2#wyZ` |
 | **🧪 Joomla** | [http://localhost:8082](http://localhost:8082) | `WiktorN` | `MbMvQpZJJBEuU2#wyZ` |
@@ -94,23 +93,13 @@ docker exec -it kali-attacker curl http://wordpress.
 
 * **Web Monitoring:** W sekcji Monitoring -> Hosts -> Web możesz sprawdzić w czasie rzeczywistym status HTTP i czas odpowiedzi dla WordPressa oraz Joomli.
 
-**3. Operacje SIEM (Wazuh Manager)**
-
-* **Sprawdzenie Statusu:** Zweryfikuj działanie silnika SIEM, wyświetlając listę aktywnych agentów:
-
-```bash
-docker exec -it wazuh-manager /var/ossec/bin/agent_control -l
-```
-
-* **Uwaga: Przez pierwsze 2-3** minuty od uruchomienia mogą pojawiać się błędy Connection refused dla queue/db/wdb. Jest to normalne zjawisko – usługi Wazuha potrzebują czasu na zainicjowanie wewnętrznych gniazd bazy danych.
-
 ---
 
 ## ⚠️ Rozwiązywanie problemów
-* **Zasoby:** Upewnij się, że Docker ma przydzielone minimum **6GB RAM** (Wazuh Indexer jest dość wymagający).
+* **Zasoby:** Upewnij się, że Docker ma przydzielone minimum **4GB RAM**
 
-* **Uprawnienia:** Jeśli bazy danych nie wstają, sprawdź uprawnienia do folderu data/.
+*   **Uprawnienia:** Jeśli bazy danych nie wstają, sprawdź uprawnienia do folderu data/.
 
-* **Sieć:** Suricata domyślnie nasłuchuje na eth0. Jeśli Twój główny interfejs w Dockerze nazywa się inaczej, skoryguj to w docker-compose.yml w sekcji command dla Suricaty.
+* **Sieć:** Suricata domyślnie nasłuchuje na interfejsie sieciowym stworzonym przez Docker. Jeśli zmieniasz nazwę sieci w docker-compose.yml, skoryguj to w konfiguracji Suricaty.
 
 ---
