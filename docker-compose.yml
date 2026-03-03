@@ -95,7 +95,6 @@ services:
         condition: service_started
     volumes:
       - ./config/suricata/log:/var/log/suricata:ro
-      - wazuh_logs:/var/ossec/logs:ro
     restart: unless-stopped
     networks:
       - zabbix-net
@@ -242,48 +241,6 @@ services:
     command: -c /etc/suricata/suricata.yaml -i eth0
     restart: unless-stopped
     
-  wazuh-indexer:
-    platform: linux/amd64
-    image: wazuh/wazuh-indexer:4.7.2
-    container_name: wazuh-indexer
-    ports:
-      - "9200:9200"
-    environment:
-      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
-    volumes:
-      - wazuh_indexer_data:/var/lib/wazuh-indexer
-    networks:
-      - zabbix-net
-
-  wazuh-manager:
-    platform: linux/amd64
-    image: wazuh/wazuh-manager:4.7.2
-    container_name: wazuh-manager
-    depends_on:
-      - wazuh-indexer
-    volumes:
-      - wazuh_etc:/var/ossec/etc
-      - wazuh_logs:/var/ossec/logs
-    networks:
-      - zabbix-net
-    ports:
-      - "1514:1514"
-      - "1515:1515"
-      - "55000:55000"
-
-  wazuh-dashboard:
-    platform: linux/amd64
-    image: wazuh/wazuh-dashboard:4.7.2
-    container_name: wazuh-dashboard
-    depends_on:
-      - wazuh-manager
-    ports:
-      - "8443:5601"
-    environment:
-      - WAZUH_MANAGER_URL=https://wazuh-manager
-    networks:
-      - zabbix-net
-      
   kali-attacker:
     build:
       context: ./kali
@@ -306,9 +263,6 @@ volumes:
   joomla_files:
   prometheus_data:
   grafana_data:
-  wazuh_indexer_data:
-  wazuh_etc:
-  wazuh_logs:
 
 networks:
   zabbix-net:
