@@ -2,16 +2,16 @@
 
 ## 🛡️ Full-Stack Monitoring & Security Lab
 
-### Kompletne poligon doświadczalny: Monitoring, SIEM, IDS & Penetration Testing
+### Kompletne poligon doświadczalny: Monitoring, IDS & Penetration Testing
 
-To środowisko łączy światy **DevOps** i **Cybersecurity**, oferując w pełni skonfigurowany stos monitorujący oraz zaawansowane narzędzia bezpieczeństwa skierowane przeciwko podatnym aplikacjom webowym.
+To środowisko łączy światy **DevOps** i **Cybersecurity**, oferując w pełni skonfigurowany stos monitorujący oraz narzędzia bezpieczeństwa skierowane przeciwko podatnym aplikacjom webowym.
 
 ---
 
 ## 🏗️ Architektura Systemu
 
 * **Monitoring:** Zabbix (Server, Web, Agents), Prometheus, Grafana
-* **Security (SIEM/IDS):** Wazuh (Indexer, Manager, Dashboard), Suricata
+* **Security (IDS):** Suricata
 * **Targets (Vulnerable Apps):** WordPress & Joomla na bazach MariaDB
 * **Offensive:** Kali Linux (Attacker) ze zintegrowanym Zabbix Agentem
 
@@ -37,7 +37,6 @@ docker compose up -d --build
 | :--- | :--- | :--- | :--- |
 | **🔍 Zabbix** | [http://localhost:8080](http://localhost:8080) | `Admin` | `zabbix` |
 | **📊 Grafana** | [http://localhost:3000](http://localhost:3000) | `admin` | `admin` |
-| **🛡️ Wazuh** | [https://localhost:8443](https://localhost:8443) | `admin` | `admin` |
 | **📈 Prometheus** | [http://localhost:9090](http://localhost:9090) | `-` | `-` |
 | **📝 WordPress** | [http://localhost:8081](http://localhost:8081) | `WiktorN` | `MbMvQpZJJBEuU2#wyZ` |
 | **🧪 Joomla** | [http://localhost:8082](http://localhost:8082) | `WiktorN` | `MbMvQpZJJBEuU2#wyZ` |
@@ -66,20 +65,41 @@ docker exec -it kali-attacker bash
 
 ---
 
-## 🕵️ Przykładowe Scenariusze Testowe
-1. **Reakcja IDS:** Wykonaj nmap -sV [IP-celu] z Kali i sprawdź logi Suricaty w config/suricata/log/eve.json.
+## 🕵️ Weryfikacja Systemu i Scenariusze Testowe
 
-2. **Monitoring SIEM:** Zaloguj się do Wazuh i zaobserwuj zdarzenia systemowe z agentów.
+Ten projekt został wstępnie skonfigurowany do dynamicznej analizy zdarzeń bezpieczeństwa. Użyj poniższych scenariuszy, aby sprawdzić działanie stosu SOC:
 
-3. **Alerting Zabbix:** Wyłącz jeden z kontenerów i zobacz, jak szybko Zabbix wyśle powiadomienie o braku dostępności usługi.
+**1. Detekcja Ataków (Suricata IDS + Zabbix)**
+
+* **Działanie:** Uruchom symulowany atak z kontenera Kali: 
+
+```bash
+docker exec -it kali-attacker curl http://wordpress.
+```
+
+* **Alert Zabbix:** Na dashboardzie pojawi się powiadomienie **Suricata Alert: GPC Potential SSH Brute Force.**
+
+* **Automatyzacja:** Dzięki konfiguracji Recovery expression (nodata), alert zostanie automatycznie zamknięty 30 sekund po ustaniu ruchu, utrzymując porządek w konsoli SOC.
+
+**2. Monitorowanie Infrastruktury (Docker Health)**
+
+* **Symulacja:** Zatrzymaj kontener ręcznie, aby wywołać alert: docker stop zabbix-joomla-1.
+
+* **Dynamiczne Alerty:** Host zabbix-agent2 zgłosi następujące zdarzenia (zgodnie z nową konfiguracją angielską):
+
+    * **Czerwony Alert (High):** Critical: zabbix-joomla-1 service is unhealthy (Healthcheck failure) – jeśli skrypt sprawdzający stan zdrowia bazy zgłosi błąd.
+
+    * **Pomarańczowy Alert (Average):** Warning: zabbix-joomla-1 application container has been stopped – gdy proces kontenera zostanie zakończony.
+
+* **Web Monitoring:** W sekcji Monitoring -> Hosts -> Web możesz sprawdzić w czasie rzeczywistym status HTTP i czas odpowiedzi dla WordPressa oraz Joomli.
 
 ---
 
 ## ⚠️ Rozwiązywanie problemów
-* **Zasoby:** Upewnij się, że Docker ma przydzielone minimum **6GB RAM** (Wazuh Indexer jest dość wymagający).
+* **Zasoby:** Upewnij się, że Docker ma przydzielone minimum **4GB RAM**
 
-* **Uprawnienia:** Jeśli bazy danych nie wstają, sprawdź uprawnienia do folderu data/.
+*   **Uprawnienia:** Jeśli bazy danych nie wstają, sprawdź uprawnienia do folderu data/.
 
-* **Sieć:** Suricata domyślnie nasłuchuje na eth0. Jeśli Twój główny interfejs w Dockerze nazywa się inaczej, skoryguj to w docker-compose.yml w sekcji command dla Suricaty.
+* **Sieć:** Suricata domyślnie nasłuchuje na interfejsie sieciowym stworzonym przez Docker. Jeśli zmieniasz nazwę sieci w docker-compose.yml, skoryguj to w konfiguracji Suricaty.
 
 ---
