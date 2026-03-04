@@ -85,7 +85,7 @@ docker exec -it kali-attacker curl http://wordpress.
 
 * **Symulacja:** Zatrzymaj kontener ręcznie, aby wywołać alert: docker stop zabbix-joomla-1.
 
-* **Dynamiczne Alerty:** Host zabbix-agent2 zgłosi następujące zdarzenia (zgodnie z nową konfiguracją angielską):
+* **Dynamiczne Alerty:** Host zabbix-agent1 zgłosi następujące zdarzenia (zgodnie z nową konfiguracją angielską):
 
     * **Czerwony Alert (High):** Critical: zabbix-joomla-1 service is unhealthy (Healthcheck failure) – jeśli skrypt sprawdzający stan zdrowia bazy zgłosi błąd.
 
